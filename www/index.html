@@ -3,6 +3,8 @@
   <head>
     <meta charset="utf-8">
     <title>Hello wasm-pack!</title>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css?family=Poppins">
     <style>
       body {
         position: absolute;
@@ -14,16 +16,25 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        font-family: 'Poppins';
       }
       #game-of-life-canvas {
         border: 5px solid #888;
         border-radius: 10px;
+      }
+
+      .text em{
+        margin: 3em;
       }
     </style>
   </head>
   <body>
     <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
     <canvas id="game-of-life-canvas"></canvas>
+    <div class="text">
+      <em>Scroll: Zoom In/Out </em>
+      <em>LMB + Move: Move the canvas</em>
+    </div>
     <script src="./bootstrap.js"></script>
   </body>
 </html>
