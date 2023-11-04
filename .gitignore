@@ -6,4 +6,7 @@ pkg/
 wasm-pack.log
 .github/
 package-lock.json
-www/
+www/dist/
+www/node_modules/
+www/package-lock.json
+www/.bin/
