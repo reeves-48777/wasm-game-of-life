@@ -1,5 +1,5 @@
 # Wasm game of life
-Followed the tutorial available on [https://rustwasm.github.io/docs/book/game-of-life/setup.html]
+Followed the tutorial available on (https://rustwasm.github.io/docs/book/game-of-life/setup.html)
 Added some tweaks on it in order to push it a step further
 
 # How to run it
