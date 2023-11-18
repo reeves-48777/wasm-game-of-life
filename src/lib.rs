@@ -2,18 +2,12 @@ mod utils;
 
 use wasm_bindgen::prelude::*;
 use js_sys::Math;
+use fixedbitset::FixedBitSet;
 
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-#[wasm_bindgen]
-#[repr(u8)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Cell {
-    Dead = 0,
-    Alive = 1
-}
 
 #[wasm_bindgen]
 pub enum CommonSpaceships {
@@ -23,41 +17,41 @@ pub enum CommonSpaceships {
     Heavyweight
 }
 impl CommonSpaceships {
-    pub fn pattern(&self) -> (Vec<Cell>, usize, usize) {
+    pub fn pattern(&self) -> (Vec<bool>, usize, usize) {
         match self {
             CommonSpaceships::Glider => {
                 (vec![
-                    Cell::Dead, Cell::Alive, Cell::Dead,
-                    Cell::Dead, Cell::Dead, Cell::Alive,
-                    Cell::Alive, Cell::Alive, Cell::Alive
+                    false, true, false,
+                    false, false, true,
+                    true, true, true
                 ], 3, 3)
             },
 
             CommonSpaceships::Lightweight => {
                 (vec![
-                    Cell::Dead, Cell::Alive, Cell::Alive, Cell::Alive, Cell::Alive,
-                    Cell::Alive, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Alive,
-                    Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Alive,
-                    Cell::Alive, Cell::Dead, Cell::Dead, Cell::Alive, Cell::Dead
+                    false, true, true, true, true,
+                    true, false, false, false, true,
+                    false, false, false, false, true,
+                    true, false, false, true, false
                 ], 5, 4)
             },
 
             CommonSpaceships::Middleweight => {
                 (vec![
-                    Cell::Dead, Cell::Alive, Cell::Alive, Cell::Alive, Cell::Alive, Cell::Alive,
-                    Cell::Alive, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Alive,
-                    Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Alive,
-                    Cell::Alive, Cell::Dead, Cell::Dead, Cell::Dead,Cell::Alive, Cell::Dead,
-                    Cell::Dead, Cell::Dead, Cell::Alive, Cell::Dead, Cell::Dead, Cell::Dead
+                    false, true, true, true, true, true,
+                    true, false, false, false, false, true,
+                    false, false, false, false, false, true,
+                    true, false, false, false,true, false,
+                    false, false, true, false, false, false
                 ], 6, 5)
             },
 
             CommonSpaceships::Heavyweight => {
                 (vec![
-                    Cell::Dead, Cell::Alive, Cell::Alive, Cell::Alive, Cell::Alive, Cell::Alive, Cell::Alive,
-                    Cell::Alive, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Alive,
-                    Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Alive,
-                    Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Alive, Cell::Dead, 
+                    false, true, true, true, true, true, true,
+                    true, false, false, false, false, false, true,
+                    false, false, false, false, false, false, true,
+                    false, false, false, false, false, true, false, 
                 ], 7, 4)
             }
         }
@@ -71,7 +65,7 @@ impl CommonSpaceships {
 pub struct Universe {
     width: u32,
     height: u32,
-    cells: Vec<Cell>
+    cells: FixedBitSet
 }
 
 impl Universe {
@@ -99,6 +93,7 @@ impl Universe {
 #[wasm_bindgen]
 impl Universe {
     pub fn tick(&mut self) {
+
         let mut next = self.cells.clone();
 
         for row in 0..self.height {
@@ -107,19 +102,18 @@ impl Universe {
                 let cell = self.cells[idx];
                 let live_neighbours = self.live_neighbour_count(row, col);
 
-                let next_cell = match (cell, live_neighbours) {
+                next.set(idx, match (cell, live_neighbours) {
                     // Rule 1 : Any live cell with fewer than two lives neighbour dies, underpopulation
-                    (Cell::Alive, x) if x < 2 => Cell::Dead,
+                    (true, x) if x < 2 => false,
                     // Rule 2 : Any live cell with two or three live neighbours lives
-                    (Cell::Alive, 2) | (Cell::Alive, 3) => Cell::Alive,
+                    (true, 2) | (true, 3) => true,
                     // Rule 3 : Any live cell with more than three neighbours live dies, overpopulation
-                    (Cell::Alive, x) if x > 3 => Cell::Dead,
+                    (true, x) if x > 3 => false,
                     // Rule 4 : Anu dead cell with exactly three live neighbours becomes alive
-                    (Cell::Dead, 3) => Cell::Alive,
+                    (false, 3) => true,
                     // all the others remain in the same state
                     (other, _) => other
-                };
-                next[idx] = next_cell;
+                });
             }
         }
         self.cells = next;
@@ -129,26 +123,12 @@ impl Universe {
         let width = 64;
         let height = 64;
 
-        let cells = (0..width * height)
-        .map(|_index| {
-            // initialisation de base (meme génération tout le temps)
-            // if index % 2 == 0 || index % 7 == 0 {
-            //     Cell::Alive
-            // } else {
-            //     Cell::Dead
-            // }
+        let size = (width * height) as usize;
+        let mut cells = FixedBitSet::with_capacity(size);
 
-            // init avec cellules à vide
-            //Cell::Dead
-
-            // init avec Math.random()
-            if Math::random() > 0.5 {
-                Cell::Alive
-            } else {
-                Cell::Dead
-            }
-        })
-        .collect();
+        for i in 0..size {
+            cells.set(i, Math::random() > 0.5);
+        }
 
         Universe {
             width,
@@ -166,7 +146,7 @@ impl Universe {
                 let universe_index = (start_y + row) * self.width as usize + (start_x + col);
 
                 if universe_index < self.cells.len() {
-                    self.cells[universe_index] = pattern[pattern_index]
+                    self.cells.set(universe_index, pattern[pattern_index]);
                 }
             }
         }
@@ -184,30 +164,34 @@ impl Universe {
         self.height
     }
 
-    pub fn cells(&self) -> *const Cell {
-        self.cells.as_ptr()
+    pub fn cells(&self) -> *const u32 {
+        self.cells.as_slice().as_ptr()
     }
 }
 
 use std::fmt;
 impl fmt::Display for Universe {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for line in self.cells.as_slice().chunks(self.width as usize) {
-            for &cell in line {
-                let symbol = if cell == Cell::Dead { '◻' } else { '◼' };
+        for row in 0..self.height {
+            for col in 0..self.width {
+                let idx = self.get_index(row, col);
+                let symbol = if self.cells.contains(idx) {'◼'} else {'◻'};
                 write!(f, "{}", symbol)?;
             }
-            writeln!(f)?;
         }
+        writeln!(f)?;
         Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use wasm_bindgen_test::*;
     use super::*;
+
+    wasm_bindgen_test_configure!(run_in_browser);
     
-    #[test]
+    #[wasm_bindgen_test]
     fn create_universe() {
         let universe = Universe::new();
         assert_eq!(universe.width, 64);
@@ -215,15 +199,15 @@ mod tests {
         assert!(universe.cells.len() > 0);
     }
 
-    #[test]
+    #[wasm_bindgen_test]
     fn create_universe_and_check_render() {
         let mut universe = Universe::new();
         let text = universe.render();
-        // println!("{}", text);
+        println!("{}", text);
         assert!(text.len() > 0);
         universe.tick();
         let text_after_tick = universe.render();
-        // println!("{}", text);
+        println!("{}", text);
         assert_ne!(text, text_after_tick);
     }
 }

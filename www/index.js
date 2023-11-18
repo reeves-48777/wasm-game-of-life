@@ -1,6 +1,6 @@
 import { memory } from "wasm-game-of-life/wasm_game_of_life_bg.wasm";
 
-import { Universe, Cell, CommonSpaceships } from "wasm-game-of-life";
+import { Universe } from "wasm-game-of-life";
 
 const CELL_SIZE = 15; // pixels
 const GRID_COLOR = "#DDDDDD";
@@ -50,9 +50,15 @@ if (canvas.getContext) {
         return row * width + col;
     };
 
+    const bitIsSet = (n, arr) => {
+        const byte = Math.floor(n / 8);
+        const mask = 1 << (n % 8);
+        return (arr[byte] & mask) === mask;
+    }
+
     const drawCells = () => {
         const cellsPtr = universe.cells();
-        const cells = new Uint8Array(memory.buffer, cellsPtr, width * height);
+        const cells = new Uint8Array(memory.buffer, cellsPtr, width * height / 8);
 
         ctx.beginPath();
 
@@ -60,9 +66,9 @@ if (canvas.getContext) {
             for (let col = 0; col < width; col++) {
                 const idx = getIndex(row, col);
 
-                ctx.fillStyle = cells[idx] === Cell.Dead
-                    ? DEAD_COLOR
-                    : ALIVE_COLOR;
+                ctx.fillStyle = bitIsSet(idx,cells)
+                    ? ALIVE_COLOR
+                    : DEAD_COLOR;
 
                 ctx.fillRect(
                     col * (CELL_SIZE + BORDER_SIZE) + 1,
