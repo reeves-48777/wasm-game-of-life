@@ -1,6 +1,7 @@
 mod utils;
 
 use wasm_bindgen::prelude::*;
+use js_sys::Math;
 
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
@@ -138,6 +139,12 @@ impl Universe {
             // }
 
             // init avec cellules à vide
+            //Cell::Dead
+
+            // init avec Math.random()
+            if Math::random() > 0.5 {
+                Cell::Alive
+            } else {
                 Cell::Dead
             }
         })

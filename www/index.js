@@ -11,9 +11,6 @@ const BORDER_SIZE = 1;
 
 
 const universe = Universe.new();
-universe.add_spaceship(CommonSpaceships.Heavyweight, 0, 32)
-universe.add_spaceship(CommonSpaceships.Lightweight, 32, 12)
-universe.add_spaceship(CommonSpaceships.Glider, 0, 0);
 const width = universe.width();
 const height = universe.height();
 
