@@ -15,6 +15,58 @@ pub enum Cell {
 }
 
 #[wasm_bindgen]
+pub enum CommonSpaceships {
+    Glider,
+    Lightweight,
+    Middleweight,
+    Heavyweight
+}
+impl CommonSpaceships {
+    pub fn pattern(&self) -> (Vec<Cell>, usize, usize) {
+        match self {
+            CommonSpaceships::Glider => {
+                (vec![
+                    Cell::Dead, Cell::Alive, Cell::Dead,
+                    Cell::Dead, Cell::Dead, Cell::Alive,
+                    Cell::Alive, Cell::Alive, Cell::Alive
+                ], 3, 3)
+            },
+
+            CommonSpaceships::Lightweight => {
+                (vec![
+                    Cell::Dead, Cell::Alive, Cell::Alive, Cell::Alive, Cell::Alive,
+                    Cell::Alive, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Alive,
+                    Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Alive,
+                    Cell::Alive, Cell::Dead, Cell::Dead, Cell::Alive, Cell::Dead
+                ], 5, 4)
+            },
+
+            CommonSpaceships::Middleweight => {
+                (vec![
+                    Cell::Dead, Cell::Alive, Cell::Alive, Cell::Alive, Cell::Alive, Cell::Alive,
+                    Cell::Alive, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Alive,
+                    Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Alive,
+                    Cell::Alive, Cell::Dead, Cell::Dead, Cell::Dead,Cell::Alive, Cell::Dead,
+                    Cell::Dead, Cell::Dead, Cell::Alive, Cell::Dead, Cell::Dead, Cell::Dead
+                ], 6, 5)
+            },
+
+            CommonSpaceships::Heavyweight => {
+                (vec![
+                    Cell::Dead, Cell::Alive, Cell::Alive, Cell::Alive, Cell::Alive, Cell::Alive, Cell::Alive,
+                    Cell::Alive, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Alive,
+                    Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Alive,
+                    Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Dead, Cell::Alive, Cell::Dead, 
+                ], 7, 4)
+            }
+        }
+
+    }
+}
+
+
+
+#[wasm_bindgen]
 pub struct Universe {
     width: u32,
     height: u32,
@@ -77,10 +129,15 @@ impl Universe {
         let height = 64;
 
         let cells = (0..width * height)
-        .map(|index| {
-            if index % 2 == 0 || index % 7 == 0 {
-                Cell::Alive
-            } else {
+        .map(|_index| {
+            // initialisation de base (meme génération tout le temps)
+            // if index % 2 == 0 || index % 7 == 0 {
+            //     Cell::Alive
+            // } else {
+            //     Cell::Dead
+            // }
+
+            // init avec cellules à vide
                 Cell::Dead
             }
         })
@@ -90,6 +147,21 @@ impl Universe {
             width,
             height,
             cells
+        }
+    }
+
+    pub fn add_spaceship(&mut self, spaceship: CommonSpaceships, start_x: usize, start_y: usize) {
+        let (pattern, pat_width, pat_height) = spaceship.pattern();
+
+        for row in 0..pat_height {
+            for col in 0..pat_width {
+                let pattern_index = row * pat_width + col;
+                let universe_index = (start_y + row) * self.width as usize + (start_x + col);
+
+                if universe_index < self.cells.len() {
+                    self.cells[universe_index] = pattern[pattern_index]
+                }
+            }
         }
     }
 
