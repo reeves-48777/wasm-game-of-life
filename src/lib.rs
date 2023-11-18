@@ -1,13 +1,19 @@
 mod utils;
 
 use wasm_bindgen::prelude::*;
-use js_sys::Math;
 use fixedbitset::FixedBitSet;
+use js_sys::Math;
 
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
+#[allow(unused_macros)]
+macro_rules! log {
+    ($( $t:tt )* ) => {
+        web_sys::console::log_1(&format!( $( $t )* ).into());
+    };
+}
 
 #[wasm_bindgen]
 pub enum CommonSpaceships {
@@ -87,13 +93,28 @@ impl Universe {
         }
         count
     }
+
+    /// Get the dead an alive values of the entire universe
+    pub fn get_cells(&self) -> Vec<bool> {
+        let mut cells = Vec::new();
+        (0..self.width * self.height).for_each(|i| cells.push(self.cells.contains(i as usize)));
+        cells
+    }
+
+    /// Set cells to be alive in a universe by passing the row and column
+    /// of each cell as an array
+    pub fn set_cells(&mut self, cells: &[(u32, u32)]) {
+        for (row, col) in cells.iter().cloned() {
+            let idx = self.get_index(row, col);
+            self.cells.set(idx, true);
+        }
+    }
 }
 
 // public methods exported to js
 #[wasm_bindgen]
 impl Universe {
     pub fn tick(&mut self) {
-
         let mut next = self.cells.clone();
 
         for row in 0..self.height {
@@ -102,24 +123,45 @@ impl Universe {
                 let cell = self.cells[idx];
                 let live_neighbours = self.live_neighbour_count(row, col);
 
+                // log!(
+                //     "cell[{},{}] is initially {:?} and has {} live neighbours",
+                //     row,
+                //     col,
+                //     cell,
+                //     live_neighbours
+                // );
+
                 next.set(idx, match (cell, live_neighbours) {
                     // Rule 1 : Any live cell with fewer than two lives neighbour dies, underpopulation
-                    (true, x) if x < 2 => false,
+                    (true, x) if x < 2 => {
+                        // log!("cell[{}, {}] was alive, became dead", row, col);
+                        false
+                    },
                     // Rule 2 : Any live cell with two or three live neighbours lives
                     (true, 2) | (true, 3) => true,
                     // Rule 3 : Any live cell with more than three neighbours live dies, overpopulation
-                    (true, x) if x > 3 => false,
+                    (true, x) if x > 3 => {
+                        // log!("cell[{}, {}] was alive, became dead", row, col);
+                        false
+                    },
                     // Rule 4 : Anu dead cell with exactly three live neighbours becomes alive
-                    (false, 3) => true,
+                    (false, 3) => {
+                        // log!("cell[{}, {}] was dead, became alive", row, col);
+                        true
+                    },
                     // all the others remain in the same state
                     (other, _) => other
                 });
+
+                // log!("  it becomes {:?}", next[idx]);
             }
         }
         self.cells = next;
     }
 
     pub fn new() -> Universe {
+        utils::set_panic_hook();
+
         let width = 64;
         let height = 64;
 
@@ -137,6 +179,9 @@ impl Universe {
         }
     }
 
+    /// Add a spaceship in the universe
+    /// 
+    /// Place a given type spaceship at a given position of the universe
     pub fn add_spaceship(&mut self, spaceship: CommonSpaceships, start_x: usize, start_y: usize) {
         let (pattern, pat_width, pat_height) = spaceship.pattern();
 
@@ -150,6 +195,19 @@ impl Universe {
                 }
             }
         }
+    }
+
+    /// Set the width of the Universe
+    /// 
+    /// Resets all cells to dead state
+    pub fn set_width(&mut self, width: u32) {
+        self.width = width;
+        (0..width * self.height).for_each(|i| self.cells.set(i as usize, false));
+    }
+
+    pub fn set_height(&mut self, height: u32) {
+        self.height = height;
+        (0..self.width * height).for_each(|i| self.cells.set(i as usize, false));
     }
 
     pub fn render(&self) -> String {
@@ -189,6 +247,22 @@ mod tests {
     use wasm_bindgen_test::*;
     use super::*;
 
+    pub fn input_spaceship() -> Universe {
+        let mut universe = Universe::new();
+        universe.set_width(6);
+        universe.set_height(6);
+        universe.set_cells(&[(1,2), (2,3), (3,1), (3,2), (3,3)]);
+        universe
+    }
+
+    pub fn expected_spaceship() -> Universe {
+        let mut universe = Universe::new();
+        universe.set_width(6);
+        universe.set_height(6);
+        universe.set_cells(&[(2,1), (2,3), (3,2), (3,3), (4,2)]);
+        universe
+    }
+
     wasm_bindgen_test_configure!(run_in_browser);
     
     #[wasm_bindgen_test]
@@ -203,11 +277,19 @@ mod tests {
     fn create_universe_and_check_render() {
         let mut universe = Universe::new();
         let text = universe.render();
-        println!("{}", text);
         assert!(text.len() > 0);
         universe.tick();
         let text_after_tick = universe.render();
-        println!("{}", text);
         assert_ne!(text, text_after_tick);
     }
+
+    #[wasm_bindgen_test]
+    fn test_tick() {
+        let mut input_universe = input_spaceship();
+        let expected_universe = expected_spaceship();
+
+        input_universe.tick();
+        assert_eq!(&input_universe.get_cells(), &expected_universe.get_cells());
+    }
+    
 }

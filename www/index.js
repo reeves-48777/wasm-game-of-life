@@ -148,6 +148,7 @@ if (canvas.getContext) {
 
 
     const renderLoop = () => {
+        // debugger;
         universe.tick();
         draw();
         requestAnimationFrame(renderLoop);
