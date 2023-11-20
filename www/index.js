@@ -202,11 +202,14 @@ if (canvas.getContext) {
         drawCells();
     })
 
+    let ticksPerFrame = document.getElementById("ticks-per-frame");
 
     let animationId = null;
     const renderLoop = () => {
         // debugger;
-        universe.tick();
+        for (let i = 0; i < ticksPerFrame.value; i++) {
+            universe.tick();
+        }
         draw();
         animationId = requestAnimationFrame(renderLoop);
     };
