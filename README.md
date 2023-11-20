@@ -25,6 +25,17 @@ winget install --id=CoreyButler.NVMforWindows  -e
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
 ```
 
+Ensure that you install the latest-lts version of node.
+```sh
+nvm install lts
+nvm use lts
+```
+The node version should be > v20.9.0.
+```sh
+node --version
+# > v20.9.0
+```
+
 That's it for the dependencies.
 
 ## Run the app
