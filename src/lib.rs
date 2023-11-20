@@ -170,13 +170,13 @@ impl Universe {
         let height = 64;
 
         let size = (width * height) as usize;
-        let mut cells = FixedBitSet::with_capacity(size);
+        let cells = FixedBitSet::with_capacity(size);
 
         // Exercise - implementing
         // Random cell values with Math.random() from js
-        for i in 0..size {
-            cells.set(i, Math::random() > 0.5);
-        }
+        // for i in 0..size {
+        //     cells.set(i, Math::random() > 0.5);
+        // }
 
         // Exercise - debugging
         //panic!()
@@ -241,6 +241,18 @@ impl Universe {
 
     pub fn cells(&self) -> *const u32 {
         self.cells.as_slice().as_ptr()
+    }
+
+    pub fn random_cells(&mut self) {
+        for i in 0..self.width * self.height {
+            self.cells.set(i as usize, Math::random() > 0.5);
+        }
+    }
+
+    pub fn dead_cells(&mut self) {
+        for i in 0..self.width * self.height {
+            self.cells.set(i as usize, false);
+        }
     }
 }
 

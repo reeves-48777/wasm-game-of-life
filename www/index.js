@@ -11,6 +11,7 @@ const BORDER_SIZE = 1;
 
 
 const universe = Universe.new();
+universe.random_cells();
 const width = universe.width();
 const height = universe.height();
 
@@ -169,6 +170,18 @@ if (canvas.getContext) {
         } else {
             pause();
         }
+    });
+
+    // sets all the cells to dead
+    const deadCellsButton = document.getElementById("dead");
+    deadCellsButton.addEventListener("click", _ => {
+        universe.dead_cells();
+    });
+
+    // sets all the cells to random
+    const randomCellsButton = document.getElementById("random");
+    randomCellsButton.addEventListener("click", _ => {
+        universe.random_cells();
     });
 
     canvas.addEventListener("click", e => {
