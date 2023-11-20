@@ -123,6 +123,7 @@ impl Universe {
                 let cell = self.cells[idx];
                 let live_neighbours = self.live_neighbour_count(row, col);
 
+                // additional logging
                 // log!(
                 //     "cell[{},{}] is initially {:?} and has {} live neighbours",
                 //     row,
@@ -134,6 +135,7 @@ impl Universe {
                 next.set(idx, match (cell, live_neighbours) {
                     // Rule 1 : Any live cell with fewer than two lives neighbour dies, underpopulation
                     (true, x) if x < 2 => {
+                        // Exercise - debugging - log in tick function
                         // log!("cell[{}, {}] was alive, became dead", row, col);
                         false
                     },
@@ -141,11 +143,13 @@ impl Universe {
                     (true, 2) | (true, 3) => true,
                     // Rule 3 : Any live cell with more than three neighbours live dies, overpopulation
                     (true, x) if x > 3 => {
+                        // Exercise - debugging - log in tick function
                         // log!("cell[{}, {}] was alive, became dead", row, col);
                         false
                     },
                     // Rule 4 : Anu dead cell with exactly three live neighbours becomes alive
                     (false, 3) => {
+                        // Exercise - debugging - log in tick function
                         // log!("cell[{}, {}] was dead, became alive", row, col);
                         true
                     },
@@ -168,9 +172,14 @@ impl Universe {
         let size = (width * height) as usize;
         let mut cells = FixedBitSet::with_capacity(size);
 
+        // Exercise - implementing
+        // Random cell values with Math.random() from js
         for i in 0..size {
             cells.set(i, Math::random() > 0.5);
         }
+
+        // Exercise - debugging
+        //panic!()
 
         Universe {
             width,
@@ -205,6 +214,9 @@ impl Universe {
         (0..width * self.height).for_each(|i| self.cells.set(i as usize, false));
     }
 
+    /// Set the height of the Universe
+    /// 
+    /// Resets all cells to dead state
     pub fn set_height(&mut self, height: u32) {
         self.height = height;
         (0..self.width * height).for_each(|i| self.cells.set(i as usize, false));
