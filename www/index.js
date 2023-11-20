@@ -1,6 +1,6 @@
 import { memory } from "wasm-game-of-life/wasm_game_of_life_bg.wasm";
 
-import { Universe } from "wasm-game-of-life";
+import { CommonSpaceships, Universe } from "wasm-game-of-life";
 
 const CELL_SIZE = 15; // pixels
 const GRID_COLOR = "#DDDDDD";
@@ -195,8 +195,14 @@ if (canvas.getContext) {
 
         const row = Math.min(Math.floor(canvasTop / (CELL_SIZE + 1)), height - 1);
         const col = Math.min(Math.floor(canvasLeft / (CELL_SIZE + 1)), width -1);
-
-        universe.toggle_cell(row, col);
+        
+        if (e.ctrlKey) {
+            universe.add_spaceship(CommonSpaceships.Glider, col-1, row-1);
+        } else if (e.shiftKey) {
+            universe.add_spaceship(CommonSpaceships.Heavyweight, col-3, row-2);
+        } else {
+            universe.toggle_cell(row, col);
+        }
 
         drawGrid();
         drawCells();
