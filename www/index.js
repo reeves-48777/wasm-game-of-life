@@ -146,14 +146,40 @@ if (canvas.getContext) {
     
     canvas.onmousedown = startDrag;
 
+    const isPaused = () => {
+        return animationId === null;
+    }
 
+    const playPauseButton = document.getElementById("play-pause");
+
+    const play = () => {
+        playPauseButton.textContent = "⏸️";
+        renderLoop();
+    };
+
+    const pause = () => {
+        playPauseButton.textContent = "▶️";
+        cancelAnimationFrame(animationId);
+        animationId = null;
+    };
+
+    playPauseButton.addEventListener("click", e => {
+        if (isPaused()) {
+            play();
+        } else {
+            pause();
+        }
+    });
+
+
+    let animationId = null;
     const renderLoop = () => {
         // debugger;
         universe.tick();
         draw();
-        requestAnimationFrame(renderLoop);
+        animationId = requestAnimationFrame(renderLoop);
     };
 
     draw();
-    requestAnimationFrame(renderLoop);
+    play();
 }
