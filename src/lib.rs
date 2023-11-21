@@ -117,52 +117,59 @@ impl Universe {
 impl Universe {
     pub fn tick(&mut self) {
         let _timer = Timer::new("Universe::tick");
-        let mut next = self.cells.clone();
+        let mut next = {
+            let _timer = Timer::new("allocate next cells");
+            self.cells.clone()
+        };
 
-        for row in 0..self.height {
-            for col in 0..self.width {
-                let idx = self.get_index(row, col);
-                let cell = self.cells[idx];
-                let live_neighbours = self.live_neighbour_count(row, col);
-
-                // additional logging
-                // log!(
-                //     "cell[{},{}] is initially {:?} and has {} live neighbours",
-                //     row,
-                //     col,
-                //     cell,
-                //     live_neighbours
-                // );
-
-                next.set(idx, match (cell, live_neighbours) {
-                    // Rule 1 : Any live cell with fewer than two lives neighbour dies, underpopulation
-                    (true, x) if x < 2 => {
-                        // Exercise - debugging - log in tick function
-                        // log!("cell[{}, {}] was alive, became dead", row, col);
-                        false
-                    },
-                    // Rule 2 : Any live cell with two or three live neighbours lives
-                    (true, 2) | (true, 3) => true,
-                    // Rule 3 : Any live cell with more than three neighbours live dies, overpopulation
-                    (true, x) if x > 3 => {
-                        // Exercise - debugging - log in tick function
-                        // log!("cell[{}, {}] was alive, became dead", row, col);
-                        false
-                    },
-                    // Rule 4 : Anu dead cell with exactly three live neighbours becomes alive
-                    (false, 3) => {
-                        // Exercise - debugging - log in tick function
-                        // log!("cell[{}, {}] was dead, became alive", row, col);
-                        true
-                    },
-                    // all the others remain in the same state
-                    (other, _) => other
-                });
-
-                // log!("  it becomes {:?}", next[idx]);
+        {
+            let _timer = Timer::new("new generation");
+            for row in 0..self.height {
+                for col in 0..self.width {
+                    let idx = self.get_index(row, col);
+                    let cell = self.cells[idx];
+                    let live_neighbours = self.live_neighbour_count(row, col);
+    
+                    // additional logging
+                    // log!(
+                    //     "cell[{},{}] is initially {:?} and has {} live neighbours",
+                    //     row,
+                    //     col,
+                    //     cell,
+                    //     live_neighbours
+                    // );
+    
+                    next.set(idx, match (cell, live_neighbours) {
+                        // Rule 1 : Any live cell with fewer than two lives neighbour dies, underpopulation
+                        (true, x) if x < 2 => {
+                            // Exercise - debugging - log in tick function
+                            // log!("cell[{}, {}] was alive, became dead", row, col);
+                            false
+                        },
+                        // Rule 2 : Any live cell with two or three live neighbours lives
+                        (true, 2) | (true, 3) => true,
+                        // Rule 3 : Any live cell with more than three neighbours live dies, overpopulation
+                        (true, x) if x > 3 => {
+                            // Exercise - debugging - log in tick function
+                            // log!("cell[{}, {}] was alive, became dead", row, col);
+                            false
+                        },
+                        // Rule 4 : Anu dead cell with exactly three live neighbours becomes alive
+                        (false, 3) => {
+                            // Exercise - debugging - log in tick function
+                            // log!("cell[{}, {}] was dead, became alive", row, col);
+                            true
+                        },
+                        // all the others remain in the same state
+                        (other, _) => other
+                    });
+    
+                    // log!("  it becomes {:?}", next[idx]);
+                }
             }
         }
-        self.cells = next;
+        let _timer = Timer::new("free old cells");
+        self.cells = next;        
     }
 
     pub fn new() -> Universe {
