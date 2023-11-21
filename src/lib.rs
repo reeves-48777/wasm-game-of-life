@@ -3,6 +3,7 @@ mod utils;
 use wasm_bindgen::prelude::*;
 use fixedbitset::FixedBitSet;
 use js_sys::Math;
+// use rand;
 use web_sys::console;
 
 #[cfg(feature = "wee_alloc")]
@@ -81,17 +82,71 @@ impl Universe {
     }
     fn live_neighbour_count(&self, row: u32, col: u32) -> u8 {
         let mut count = 0;
-        for delta_row in [self.height -1, 0, 1].iter().cloned() {
-            for delta_col in [self.width -1, 0, 1].iter().cloned() {
-                if delta_row == 0 && delta_col == 0 {
-                    continue;
-                }
-                let neighbour_row = (row + delta_row) % self.height;
-                let neighbour_col = (col + delta_col) % self.width;
-                let idx = self.get_index(neighbour_row, neighbour_col);
-                count += self.cells[idx] as u8;
-            }
+
+        let north = if row == 0 {
+            self.height -1
+        } else {
+            row - 1
+        };
+
+        let south = if row == self.height + 1 {
+            0
+        } else {
+            row + 1
+        };
+
+        let west = if col == 0 {
+            self.width - 1
+        } else {
+            col - 1
+        };
+
+        let east = if col == self.width + 1 {
+            0
+        } else {
+            col + 1
+        };
+
+        let nw = self.get_index(north, west);
+        if self.cells.contains(nw) {
+            count += 1;
         }
+    
+        let n = self.get_index(north, col);
+        if self.cells.contains(n) {
+            count += 1;
+        }
+
+        let ne = self.get_index(north, east);
+        if self.cells.contains(ne) {
+            count += 1;
+        }
+
+        let w = self.get_index(row, west);
+        if self.cells.contains(w) {
+            count += 1;
+        }
+
+        let e = self.get_index(row, east);
+        if self.cells.contains(e) {
+            count += 1;
+        }
+
+        let sw = self.get_index(south, west);
+        if self.cells.contains(sw) {
+            count += 1;
+        }
+
+        let s = self.get_index(south, col);
+        if self.cells.contains(s) {
+            count += 1;
+        }
+
+        let se = self.get_index(south, east);
+        if self.cells.contains(se) {
+            count += 1;
+        }
+        
         count
     }
 
@@ -255,6 +310,7 @@ impl Universe {
     pub fn random_cells(&mut self) {
         for i in 0..self.width * self.height {
             self.cells.set(i as usize, Math::random() > 0.5);
+            // self.cells.set(i as usize, rand::random::<f64>() > 0.5);
         }
     }
 
