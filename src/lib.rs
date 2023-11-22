@@ -171,14 +171,34 @@ impl Universe {
 // public methods exported to js
 #[wasm_bindgen]
 impl Universe {
+
+    pub fn new() -> Universe {
+        utils::set_panic_hook();
+
+        let width = 128;
+        let height = 128;
+
+        let size = (width * height) as usize;
+        let cells = FixedBitSet::with_capacity(size);
+        let back_buffer = FixedBitSet::with_capacity(size);
+
+        Universe {
+            width,
+            height,
+            cells,
+            back_buffer
+        }
+    }
+
+
     pub fn tick(&mut self) {
-        let _timer = Timer::new("Universe::tick");
+        //let _timer = Timer::new("Universe::tick");
         for row in 0..self.height {
             for col in 0..self.width {
                 let idx = self.get_index(row, col);
                 let cell = self.cells[idx];
                 let live_neighbours = self.live_neighbour_count(row, col);
-                
+
                 self.back_buffer.set(idx, match (cell, live_neighbours) {
                     // Rule 1 : Any live cell with fewer than two lives neighbour dies, underpopulation
                     (true, x) if x < 2 => {
@@ -203,23 +223,6 @@ impl Universe {
         std::mem::swap(&mut self.cells, &mut self.back_buffer);      
     }
 
-    pub fn new() -> Universe {
-        utils::set_panic_hook();
-
-        let width = 64;
-        let height = 64;
-
-        let size = (width * height) as usize;
-        let cells = FixedBitSet::with_capacity(size);
-        let back_buffer = FixedBitSet::with_capacity(size);
-
-        Universe {
-            width,
-            height,
-            cells,
-            back_buffer
-        }
-    }
 
     /// Add a spaceship in the universe
     /// 
@@ -288,7 +291,7 @@ impl Universe {
     pub fn dead_cells(&mut self) {
         for i in 0..self.width * self.height {
             self.back_buffer.set(i as usize, false);
-            std::mem::swap(&mut self.cells, &mut self.back_buffer);
+            std::mem::swap(&mut self.cells, &mut self.back_buffer); 
         }
     }
 }
