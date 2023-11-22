@@ -178,42 +178,26 @@ impl Universe {
                 let idx = self.get_index(row, col);
                 let cell = self.cells[idx];
                 let live_neighbours = self.live_neighbour_count(row, col);
-
-                // additional logging
-                // log!(
-                //     "cell[{},{}] is initially {:?} and has {} live neighbours",
-                //     row,
-                //     col,
-                //     cell,
-                //     live_neighbours
-                // );
-
+                
                 self.back_buffer.set(idx, match (cell, live_neighbours) {
                     // Rule 1 : Any live cell with fewer than two lives neighbour dies, underpopulation
                     (true, x) if x < 2 => {
-                        // Exercise - debugging - log in tick function
-                        // log!("cell[{}, {}] was alive, became dead", row, col);
                         false
                     },
                     // Rule 2 : Any live cell with two or three live neighbours lives
                     (true, 2) | (true, 3) => true,
                     // Rule 3 : Any live cell with more than three neighbours live dies, overpopulation
                     (true, x) if x > 3 => {
-                        // Exercise - debugging - log in tick function
-                        // log!("cell[{}, {}] was alive, became dead", row, col);
                         false
                     },
                     // Rule 4 : Anu dead cell with exactly three live neighbours becomes alive
                     (false, 3) => {
-                        // Exercise - debugging - log in tick function
-                        // log!("cell[{}, {}] was dead, became alive", row, col);
                         true
                     },
                     // all the others remain in the same state
                     (other, _) => other
                 });
 
-                // log!("  it becomes {:?}", next[idx]);
             }
         }
         std::mem::swap(&mut self.cells, &mut self.back_buffer);      
@@ -228,15 +212,6 @@ impl Universe {
         let size = (width * height) as usize;
         let cells = FixedBitSet::with_capacity(size);
         let back_buffer = FixedBitSet::with_capacity(size);
-
-        // Exercise - implementing
-        // Random cell values with Math.random() from js
-        // for i in 0..size {
-        //     cells.set(i, Math::random() > 0.5);
-        // }
-
-        // Exercise - debugging
-        //panic!()
 
         Universe {
             width,
@@ -307,7 +282,6 @@ impl Universe {
         for i in 0..self.width * self.height {
             self.back_buffer.set(i as usize, Math::random() > 0.5);
             std::mem::swap(&mut self.cells, &mut self.back_buffer);
-            // self.cells.set(i as usize, rand::random::<f64>() > 0.5);
         }
     }
 
