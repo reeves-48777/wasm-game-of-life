@@ -2,11 +2,11 @@ import { memory } from "wasm-game-of-life/wasm_game_of_life_bg.wasm";
 
 import { CommonSpaceships, Universe } from "wasm-game-of-life";
 
-const CELL_SIZE = 15; // pixels
+const CANVAS_WIDTH = 1024; //pixels
 const GRID_COLOR = "#DDDDDD";
 const DEAD_COLOR = "#EEEEEE";
 const ALIVE_COLOR = "#333333";
-const LEFT_MOUSE_BUTTON = 0;
+const RMB = 2;
 const BORDER_SIZE = 1;
 
 
@@ -14,6 +14,9 @@ const universe = Universe.new();
 universe.random_cells();
 const width = universe.width();
 const height = universe.height();
+
+const cellSize = CANVAS_WIDTH / width; // pixels
+
 
 const fps = new class {
     constructor() {
@@ -58,8 +61,8 @@ const fps = new class {
 
 // On init le canvas pour qu'il ait la place pour toutes les cellules et un bord de 1px;
 const canvas = document.getElementById("game-of-life-canvas");
-canvas.height = (CELL_SIZE + 1) * height + 1;
-canvas.width = (CELL_SIZE + 1) * width + 1;
+canvas.height = (cellSize + 1) * height + 1;
+canvas.width = (cellSize + 1) * width + 1;
 
 if (canvas.getContext) {
     const ctx = canvas.getContext("2d");
@@ -75,14 +78,14 @@ if (canvas.getContext) {
 
         // lignes verticales
         for (let v = 0; v <= width; v++) {
-            ctx.moveTo(v * (CELL_SIZE + 1) + BORDER_SIZE / 2, 0);
-            ctx.lineTo(v * (CELL_SIZE + 1) + BORDER_SIZE / 2, (CELL_SIZE + 1) * height + BORDER_SIZE / 2);
+            ctx.moveTo(v * (cellSize + 1) + BORDER_SIZE / 2, 0);
+            ctx.lineTo(v * (cellSize + 1) + BORDER_SIZE / 2, (cellSize + 1) * height + BORDER_SIZE / 2);
         }
 
         // lignes horizontale
         for (let h = 0; h <= height; h++) {
-            ctx.moveTo(0, h * (CELL_SIZE + 1) + BORDER_SIZE / 2);
-            ctx.lineTo((CELL_SIZE + 1) * width + BORDER_SIZE / 2, h * (CELL_SIZE + 1) + BORDER_SIZE / 2);
+            ctx.moveTo(0, h * (cellSize + 1) + BORDER_SIZE / 2);
+            ctx.lineTo((cellSize + 1) * width + BORDER_SIZE / 2, h * (cellSize + 1) + BORDER_SIZE / 2);
         }
 
         ctx.stroke();
@@ -114,10 +117,10 @@ if (canvas.getContext) {
                     continue;
                 }
                 ctx.fillRect(
-                    col * (CELL_SIZE + BORDER_SIZE) + 1,
-                    row * (CELL_SIZE + BORDER_SIZE) + 1,
-                    CELL_SIZE,
-                    CELL_SIZE
+                    col * (cellSize + BORDER_SIZE) + 1,
+                    row * (cellSize + BORDER_SIZE) + 1,
+                    cellSize,
+                    cellSize
                 );
             }
         }
@@ -132,10 +135,10 @@ if (canvas.getContext) {
                     continue;
                 }
                 ctx.fillRect(
-                    col * (CELL_SIZE + BORDER_SIZE) + 1,
-                    row * (CELL_SIZE + BORDER_SIZE) + 1,
-                    CELL_SIZE,
-                    CELL_SIZE
+                    col * (cellSize + BORDER_SIZE) + 1,
+                    row * (cellSize + BORDER_SIZE) + 1,
+                    cellSize,
+                    cellSize
                 );
             }
         }
@@ -185,7 +188,7 @@ if (canvas.getContext) {
     canvas.onwheel = zoom;
 
     const startDrag = (event) => {
-        if (event.button === LEFT_MOUSE_BUTTON) {
+        if (event.button === RMB) {
             const startX = event.clientX - offsetX;
             const startY = event.clientY - offsetY;
 
@@ -253,8 +256,8 @@ if (canvas.getContext) {
         const canvasLeft = (e.clientX - boundingRect.left) * scaleX;
         const canvasTop = (e.clientY - boundingRect.top) * scaleY;
 
-        const row = Math.min(Math.floor(canvasTop / (CELL_SIZE + 1)), height - 1);
-        const col = Math.min(Math.floor(canvasLeft / (CELL_SIZE + 1)), width -1);
+        const row = Math.min(Math.floor(canvasTop / (cellSize + 1)), height - 1);
+        const col = Math.min(Math.floor(canvasLeft / (cellSize + 1)), width -1);
         
         if (e.ctrlKey) {
             universe.add_spaceship(CommonSpaceships.Glider, col-1, row-1);
@@ -266,7 +269,9 @@ if (canvas.getContext) {
 
         drawGrid();
         drawCells();
-    })
+    });
+
+    canvas.addEventListener("contextmenu", e => e.preventDefault());
 
     let ticksPerFrame = document.getElementById("ticks-per-frame");
 
