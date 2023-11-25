@@ -32,3 +32,13 @@ fn test_tick() {
     input_universe.tick();
     assert_eq!(&input_universe.get_cells(), &expected_universe.get_cells());
 }
+
+#[wasm_bindgen_test]
+fn test_delta_based_update() {
+    let mut input_universe = input_spaceship();
+    let expected_coordinates = vec![(1,2), (2,1), (3,1), (4,2)];
+
+    input_universe.tick();
+    let given_coordinates: Vec<(u32, u32)> = serde_wasm_bindgen::from_value(input_universe.get_changes()).unwrap();
+    assert_eq!(given_coordinates, expected_coordinates);
+}
