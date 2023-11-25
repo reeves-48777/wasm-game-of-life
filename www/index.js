@@ -1,68 +1,39 @@
 import { memory } from "wasm-game-of-life/wasm_game_of_life_bg.wasm";
-
 import { CommonSpaceships, Universe } from "wasm-game-of-life";
 
-const CANVAS_WIDTH = 1024; //pixels
-const GRID_COLOR = "#DDDDDD";
-const DEAD_COLOR = "#EEEEEE";
-const ALIVE_COLOR = "#333333";
-const RMB = 2;
-const BORDER_SIZE = 1;
+import {fps} from "./js/fps"
 
+const CELL_SIZE = 16; // pixels
+const BORDER_SIZE = 1; // pixel
+const BORDER_OFFSET = 1; // pixel
+
+const GRID_COLOR = "#a0a0a0";
+const DEAD_COLOR = "#e0e0e0";
+const ALIVE_COLOR = "#3E3E3E";
+const RMB = 2;
+
+const bitStorageSize = 8;
+
+const gridHeight = 8; // cells
+const gridWidth = 8; // cells
 
 const universe = Universe.new();
+
+if (gridWidth !== null) {
+    universe.set_width(gridWidth);
+}
+if (gridHeight !== null) {
+    universe.set_height(gridHeight);
+}
 universe.random_cells();
 const width = universe.width();
 const height = universe.height();
 
-const cellSize = CANVAS_WIDTH / width; // pixels
-
-
-const fps = new class {
-    constructor() {
-        this.fps = document.getElementById("fps");
-        this.frames = [];
-        this.lastFrameTimeStamp = performance.now();
-    }
-
-    render() {
-        // convert delta time since the last frame render into a measure of fps
-        const now = performance.now();
-        const delta = now -this.lastFrameTimeStamp;
-        this.lastFrameTimeStamp = now;
-        const fps = 1 / delta * 1000;
-
-        // save only the latest 100 timings
-        this.frames.push(fps);
-        if (this.frames.length > 100) {
-            this.frames.shift();
-        }
-
-        // find the max, min, average of the timings
-        let min = Infinity;
-        let max = -Infinity;
-        let sum = 0;
-        for (let i = 0; i < this.frames.length; i++) {
-            sum += this.frames[i];
-            min = Math.min(this.frames[i], min);
-            max = Math.max(this.frames[i], max);
-        }
-        let avg = sum / this.frames.length;
-
-        this.fps.textContent = `
-        Frames per Second:
-    latest = ${Math.round(fps)}
-    avg = ${Math.round(avg)}
-    min = ${Math.round(min)}
-    max = ${Math.round(max)}
-        `.trim();
-    }
-}
 
 // On init le canvas pour qu'il ait la place pour toutes les cellules et un bord de 1px;
 const canvas = document.getElementById("game-of-life-canvas");
-canvas.height = (cellSize + 1) * height + 1;
-canvas.width = (cellSize + 1) * width + 1;
+canvas.height = (CELL_SIZE + 1) * height + 1;
+canvas.width = (CELL_SIZE + 1) * width + 1;
 
 if (canvas.getContext) {
     const ctx = canvas.getContext("2d");
@@ -71,39 +42,47 @@ if (canvas.getContext) {
     const zoomSens = 0.1;
     let offsetX = 0, offsetY = 0;
 
+    const getIndex = (row, col) => {
+        return row * width + col;
+    };
+
+    const drawCell = (row, col) => {
+        ctx.fillRect(
+            col * (CELL_SIZE + BORDER_SIZE) + BORDER_OFFSET,
+            row * (CELL_SIZE + BORDER_SIZE) + BORDER_OFFSET,
+            CELL_SIZE,
+            CELL_SIZE
+        );
+    };
+
+    const bitIsSet = (bitIndex, cellsArray) => {
+        const byteIndex = Math.floor(bitIndex / bitStorageSize);
+        const mask = 1 << (bitIndex % bitStorageSize);
+        return (cellsArray[byteIndex] & mask) !== 0;
+    };
+
     const drawGrid = () => {
         ctx.beginPath();
         ctx.strokeStyle = GRID_COLOR;
 
-
         // lignes verticales
         for (let v = 0; v <= width; v++) {
-            ctx.moveTo(v * (cellSize + 1) + BORDER_SIZE / 2, 0);
-            ctx.lineTo(v * (cellSize + 1) + BORDER_SIZE / 2, (cellSize + 1) * height + BORDER_SIZE / 2);
+            ctx.moveTo(v * (CELL_SIZE + 1) + BORDER_SIZE / 2, 0);
+            ctx.lineTo(v * (CELL_SIZE + 1) + BORDER_SIZE / 2, (CELL_SIZE + 1) * height + BORDER_SIZE / 2);
         }
 
         // lignes horizontale
         for (let h = 0; h <= height; h++) {
-            ctx.moveTo(0, h * (cellSize + 1) + BORDER_SIZE / 2);
-            ctx.lineTo((cellSize + 1) * width + BORDER_SIZE / 2, h * (cellSize + 1) + BORDER_SIZE / 2);
+            ctx.moveTo(0, h * (CELL_SIZE + 1) + BORDER_SIZE / 2);
+            ctx.lineTo((CELL_SIZE + 1) * width + BORDER_SIZE / 2, h * (CELL_SIZE + 1) + BORDER_SIZE / 2);
         }
 
         ctx.stroke();
     };
 
-    const getIndex = (row, col) => {
-        return row * width + col;
-    };
-
-    const bitIsSet = (n, arr) => {
-        const byte = Math.floor(n / 8);
-        const mask = 1 << (n % 8);
-        return (arr[byte] & mask) === mask;
-    }
-
     const drawCells = () => {
         const cellsPtr = universe.cells();
-        const cells = new Uint8Array(memory.buffer, cellsPtr, width * height / 8);
+        const cells = new Uint8Array(memory.buffer, cellsPtr, width * height / bitStorageSize);
 
         ctx.beginPath();
 
@@ -116,12 +95,8 @@ if (canvas.getContext) {
                 if (!bitIsSet(idx, cells)) {
                     continue;
                 }
-                ctx.fillRect(
-                    col * (cellSize + BORDER_SIZE) + 1,
-                    row * (cellSize + BORDER_SIZE) + 1,
-                    cellSize,
-                    cellSize
-                );
+                drawCell(row, col);
+
             }
         }
 
@@ -134,12 +109,8 @@ if (canvas.getContext) {
                 if (bitIsSet(idx, cells)) {
                     continue;
                 }
-                ctx.fillRect(
-                    col * (cellSize + BORDER_SIZE) + 1,
-                    row * (cellSize + BORDER_SIZE) + 1,
-                    cellSize,
-                    cellSize
-                );
+                drawCell(row, col);
+
             }
         }
         ctx.stroke();
@@ -150,11 +121,9 @@ if (canvas.getContext) {
         ctx.clearRect(0,0, canvas.width, canvas.height);
         ctx.translate(offsetX, offsetY);
         ctx.scale(scale, scale);
-
         // main draw here
         drawGrid();
         drawCells();
-
         ctx.restore();
     };
 
@@ -210,11 +179,24 @@ if (canvas.getContext) {
     
     canvas.onmousedown = startDrag;
 
+    // sets all the cells to dead
+    const deadCellsButton = document.getElementById("dead");
+    deadCellsButton.addEventListener("click", _ => {
+        universe.dead_cells();
+    });
+
+    // sets all the cells to random
+    const randomCellsButton = document.getElementById("random");
+    randomCellsButton.addEventListener("click", _ => {
+        universe.random_cells();
+    });
+
+    // play/pause button
+    const playPauseButton = document.getElementById("play-pause");
+
     const isPaused = () => {
         return animationId === null;
     }
-
-    const playPauseButton = document.getElementById("play-pause");
 
     const play = () => {
         playPauseButton.textContent = "⏸️";
@@ -235,40 +217,42 @@ if (canvas.getContext) {
         }
     });
 
-    // sets all the cells to dead
-    const deadCellsButton = document.getElementById("dead");
-    deadCellsButton.addEventListener("click", _ => {
-        universe.dead_cells();
-    });
-
-    // sets all the cells to random
-    const randomCellsButton = document.getElementById("random");
-    randomCellsButton.addEventListener("click", _ => {
-        universe.random_cells();
-    });
-
     canvas.addEventListener("click", e => {
-        const boundingRect = canvas.getBoundingClientRect();
-        
-        const scaleX = canvas.width / boundingRect.width;
-        const scaleY = canvas.height / boundingRect.height;
+        const rect = canvas.getBoundingClientRect();
+        const style = window.getComputedStyle(canvas);
 
-        const canvasLeft = (e.clientX - boundingRect.left) * scaleX;
-        const canvasTop = (e.clientY - boundingRect.top) * scaleY;
+        const padding = parseInt(style.padding, 10);
+        const borderWidth = parseInt(style.borderWidth, 10);
 
-        const row = Math.min(Math.floor(canvasTop / (cellSize + 1)), height - 1);
-        const col = Math.min(Math.floor(canvasLeft / (cellSize + 1)), width -1);
-        
-        if (e.ctrlKey) {
-            universe.add_spaceship(CommonSpaceships.Glider, col-1, row-1);
-        } else if (e.shiftKey) {
-            universe.add_spaceship(CommonSpaceships.Heavyweight, col-3, row-2);
-        } else {
-            universe.toggle_cell(row, col);
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+
+        const x = (e.clientX - rect.left - padding - borderWidth) * scaleX;
+        const y = (e.clientY - rect.top - padding - borderWidth) * scaleY;
+
+        const clickOffset = BORDER_SIZE / 2;
+
+        const col = Math.floor((x - clickOffset) / (CELL_SIZE + BORDER_SIZE));
+        const row = Math.floor((y - clickOffset) / (CELL_SIZE + BORDER_SIZE));
+
+        if (row >= 0 && row < height && col >= 0 && col < width) {
+            if (e.ctrlKey) {
+                universe.add_spaceship(CommonSpaceships.Glider, col-1, row-1);
+            } else if (e.shiftKey) {
+                universe.add_spaceship(CommonSpaceships.Heavyweight, col-3, row-2);
+            } else {
+                universe.toggle_cell(row, col);
+                            }
+    
+            drawGrid();
+            drawCells();
         }
+        // debug avec un cercle rouge pour voir la ou le click est détecté
+        // ctx.strokeStyle = "#FF0000";
+        // ctx.beginPath();
+        // ctx.arc(x, y, 5, 0, Math.PI * 2);
+        // ctx.stroke();
 
-        drawGrid();
-        drawCells();
     });
 
     canvas.addEventListener("contextmenu", e => e.preventDefault());
@@ -276,8 +260,8 @@ if (canvas.getContext) {
     let ticksPerFrame = document.getElementById("ticks-per-frame");
 
     let animationId = null;
+
     const renderLoop = () => {
-        // debugger;
         fps.render();
         for (let i = 0; i < ticksPerFrame.value; i++) {
             universe.tick();
@@ -285,6 +269,14 @@ if (canvas.getContext) {
         draw();
         animationId = requestAnimationFrame(renderLoop);
     };
+
+    // document.addEventListener('keypress', (e) => {
+    //     if (e.code === "Space") {
+    //         e.preventDefault();
+    //         universe.tick();
+    //         drawDelta;
+    //     }
+    // })
 
     draw();
     play();
