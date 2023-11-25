@@ -236,7 +236,7 @@ impl Universe {
 
             }
         }
-        std::mem::swap(&mut self.cells, &mut self.back_buffer);      
+        std::mem::swap(&mut self.cells, &mut self.back_buffer);   
     }
 
 
@@ -251,8 +251,15 @@ impl Universe {
                 let pattern_index = row * pat_width + col;
                 let universe_index = (start_y + row) * self.width as usize + (start_x + col);
 
-                        self.deltas.push(CellDelta { row: row as u32, col: col as u32, is_alive: pattern[pattern_index]});
+                self.deltas.push(CellDelta { row: row as u32, col: col as u32, is_alive: pattern[pattern_index]});
+                
+                if universe_index < self.back_buffer.len() {
+                    if !self.cells.contains(universe_index) {
+                        self.cells.set(universe_index, pattern[pattern_index]);
+                        self.back_buffer.set(universe_index, pattern[pattern_index]);
+                    }
                     self.cells.set(universe_index, pattern[pattern_index]);
+                    self.back_buffer.set(universe_index, pattern[pattern_index]);
                 }
             }
         }
@@ -261,6 +268,7 @@ impl Universe {
     pub fn toggle_cell(&mut self, row: u32, col: u32) {
         let idx = self.get_index(row, col);
         self.cells.toggle(idx);
+        self.back_buffer.toggle(idx);
     }
 
     /// Set the width of the Universe
@@ -268,7 +276,10 @@ impl Universe {
     /// Resets all cells to dead state
     pub fn set_width(&mut self, width: u32) {
         self.width = width;
-        (0..width * self.height).for_each(|i| self.back_buffer.set(i as usize, false));
+        let size = width * self.height;
+        self.cells = FixedBitSet::with_capacity(size as usize);
+        self.back_buffer = FixedBitSet::with_capacity(size as usize);
+        self.dead_cells();
         std::mem::swap(&mut self.cells, &mut self.back_buffer);
     }
 
@@ -277,7 +288,10 @@ impl Universe {
     /// Resets all cells to dead state
     pub fn set_height(&mut self, height: u32) {
         self.height = height;
-        (0..self.width * height).for_each(|i| self.back_buffer.set(i as usize, false));
+        let size = self.width * height;
+        self.cells = FixedBitSet::with_capacity(size as usize);
+        self.back_buffer = FixedBitSet::with_capacity(size as usize);
+        self.dead_cells();
         std::mem::swap(&mut self.cells, &mut self.back_buffer);
     }
 
@@ -310,7 +324,7 @@ impl Universe {
     pub fn dead_cells(&mut self) {
         for i in 0..self.width * self.height {
             self.back_buffer.set(i as usize, false);
-            std::mem::swap(&mut self.cells, &mut self.back_buffer); 
+            std::mem::swap(&mut self.cells, &mut self.back_buffer);
         }
     }
 }
