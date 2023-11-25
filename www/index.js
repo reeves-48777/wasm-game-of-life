@@ -3,7 +3,7 @@ import { CommonSpaceships, Universe } from "wasm-game-of-life";
 
 import {fps} from "./js/fps"
 
-const CELL_SIZE = 16; // pixels
+const CELL_SIZE = 1; // pixels
 const BORDER_SIZE = 1; // pixel
 const BORDER_OFFSET = 1; // pixel
 
@@ -14,8 +14,8 @@ const RMB = 2;
 
 const bitStorageSize = 8;
 
-const gridHeight = 8; // cells
-const gridWidth = 8; // cells
+const gridHeight = 512; // cells
+const gridWidth = 512; // cells
 
 const universe = Universe.new();
 
