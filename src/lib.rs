@@ -3,6 +3,7 @@ mod utils;
 use wasm_bindgen::prelude::*;
 use fixedbitset::FixedBitSet;
 use js_sys::Math;
+use serde::{Serialize, Deserialize};
 // use rand;
 use web_sys::console;
 
@@ -15,6 +16,13 @@ macro_rules! log {
     ($( $t:tt )* ) => {
         web_sys::console::log_1(&format!( $( $t )* ).into());
     };
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct CellDelta {
+    row: u32,
+    col: u32,
+    is_alive: bool
 }
 
 #[wasm_bindgen]
@@ -75,6 +83,7 @@ pub struct Universe {
     height: u32,
     cells: FixedBitSet,
     back_buffer: FixedBitSet,
+    deltas: Vec<CellDelta>
 }
 
 impl Universe {
@@ -181,18 +190,22 @@ impl Universe {
         let size = (width * height) as usize;
         let cells = FixedBitSet::with_capacity(size);
         let back_buffer = FixedBitSet::with_capacity(size);
+        let deltas: Vec<CellDelta> = Vec::new();
 
         Universe {
             width,
             height,
             cells,
-            back_buffer
+            back_buffer,
+            deltas
         }
     }
 
 
     pub fn tick(&mut self) {
         //let _timer = Timer::new("Universe::tick");
+        self.deltas.clear();
+
         for row in 0..self.height {
             for col in 0..self.width {
                 let idx = self.get_index(row, col);
@@ -202,16 +215,19 @@ impl Universe {
                 self.back_buffer.set(idx, match (cell, live_neighbours) {
                     // Rule 1 : Any live cell with fewer than two lives neighbour dies, underpopulation
                     (true, x) if x < 2 => {
+                        self.deltas.push(CellDelta { row, col, is_alive: false });
                         false
                     },
                     // Rule 2 : Any live cell with two or three live neighbours lives
                     (true, 2) | (true, 3) => true,
                     // Rule 3 : Any live cell with more than three neighbours live dies, overpopulation
                     (true, x) if x > 3 => {
+                        self.deltas.push(CellDelta { row, col, is_alive: false });
                         false
                     },
                     // Rule 4 : Anu dead cell with exactly three live neighbours becomes alive
                     (false, 3) => {
+                        self.deltas.push(CellDelta { row, col, is_alive: true });
                         true
                     },
                     // all the others remain in the same state
@@ -235,7 +251,7 @@ impl Universe {
                 let pattern_index = row * pat_width + col;
                 let universe_index = (start_y + row) * self.width as usize + (start_x + col);
 
-                if universe_index < self.cells.len() {
+                        self.deltas.push(CellDelta { row: row as u32, col: col as u32, is_alive: pattern[pattern_index]});
                     self.cells.set(universe_index, pattern[pattern_index]);
                 }
             }
@@ -279,6 +295,9 @@ impl Universe {
 
     pub fn cells(&self) -> *const u32 {
         self.cells.as_slice().as_ptr()
+    }
+    pub fn get_deltas(&self) -> JsValue {
+        serde_wasm_bindgen::to_value(&self.deltas).unwrap()
     }
 
     pub fn random_cells(&mut self) {

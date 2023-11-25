@@ -3,40 +3,39 @@
   <head>
     <meta charset="utf-8">
     <title>Hello wasm-pack!</title>
-    <link rel="stylesheet"
-          href="https://fonts.googleapis.com/css?family=Poppins">
-    <style>
-      body {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        font-family: 'Poppins';
-      }
-      #game-of-life-canvas {
-        border: 5px solid #888;
-        border-radius: 10px;
-      }
-
-      .text em{
-        margin: 3em;
-      }
-
-      .buttons-flex {
-        display: inline-block;
-      }
-
-      #fps {
-        white-space: pre;
-        font-family: monospace;
-      }
-    </style>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Poppins">
   </head>
+  <style>
+    body {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Poppins';
+    }
+
+    #game-of-life-canvas {
+      margin: 3rem;
+    }
+
+    .text em{
+      margin: 3em;
+    }
+
+    .buttons-flex {
+      display: inline-block;
+    }
+
+    #fps {
+      white-space: pre;
+      font-family: monospace;
+    }
+  </style>
   <body>
     <noscript>This page contains webassembly and javascript content, please enable javascript in your browser.</noscript>
     <div class="controls">
