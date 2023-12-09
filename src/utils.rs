@@ -9,3 +9,31 @@ pub fn set_panic_hook() {
     #[cfg(feature = "console_error_panic_hook")]
     console_error_panic_hook::set_once();
 }
+
+
+#[allow(unused_macros)]
+#[macro_export]
+macro_rules! log {
+    ($( $t:tt )* ) => {
+        web_sys::console::log_1(&format!( $( $t )* ).into());
+    };
+}
+
+pub struct Timer<'a> {
+    name : &'a str,
+}
+
+use web_sys::console;
+impl<'a> Timer<'a> {
+    #[allow(dead_code)]
+    pub fn new(name: &'a str) -> Timer<'a> {
+        console::time_with_label(name);
+        Timer {name}
+    }
+}
+
+impl<'a> Drop for Timer<'a> {
+    fn drop(&mut self) {
+        console::time_end_with_label(self.name);
+    }
+}
