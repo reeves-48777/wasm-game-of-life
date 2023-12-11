@@ -14,9 +14,13 @@ pub struct Universe {
 }
 
 impl Universe {
+
+    /// Get the index of a cell in the universe, given a row and a column
     fn get_index(&self, row :u32, col: u32) -> usize {
         (row * self.width + col) as usize
     }
+
+    /// Count the number of living neighbours of a cell in the universe
     fn live_neighbour_count(&self, row: u32, col: u32) -> u8 {
         let mut count = 0;
 
@@ -126,7 +130,7 @@ impl Universe {
         }
     }
 
-
+    /// Calculate the next state of the universe
     pub fn tick(&mut self) {
         //let _timer = Timer::new("Universe::tick");
         for row in 0..self.height {
@@ -183,6 +187,7 @@ impl Universe {
         }
     }
 
+    /// Toggle the state of a cell in the universe, given its row and column
     pub fn toggle_cell(&mut self, row: u32, col: u32) {
         let idx = self.get_index(row, col);
         self.cells.toggle(idx);
@@ -213,22 +218,27 @@ impl Universe {
         std::mem::swap(&mut self.cells, &mut self.back_buffer);
     }
 
+    /// Render as text the universe
     pub fn render(&self) -> String {
         self.to_string()
     }
 
+    /// Returns the width of the universe
     pub fn width(&self) -> u32 {
         self.width
     }
 
+    /// Returns the height of the universe
     pub fn height(&self) -> u32 {
         self.height
     }
 
+    /// Returns a pointer to the cells array
     pub fn cells(&self) -> *const u32 {
         self.cells.as_slice().as_ptr()
     }
 
+    /// Generate random cells
     pub fn random_cells(&mut self) {
         for i in 0..self.width * self.height {
             self.back_buffer.set(i as usize, Math::random() > 0.5);
@@ -236,6 +246,7 @@ impl Universe {
         }
     }
 
+    /// Kill all cells
     pub fn dead_cells(&mut self) {
         for i in 0..self.width * self.height {
             self.back_buffer.set(i as usize, false);

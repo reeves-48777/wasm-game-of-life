@@ -1,3 +1,11 @@
+/**
+ * @license Apache-2.0
+ * @version 0.1.0
+ * @since 0.1.0
+ * @module wasm-game-of-life/www/js/fps
+ * @exports fps
+ * @description Contains the FPS class, used to count the frames per second.
+ */
 const fps = new class {
     constructor() {
         this.fps = document.getElementById("fps");
@@ -5,6 +13,11 @@ const fps = new class {
         this.lastFrameTimeStamp = performance.now();
     }
 
+    /**
+     * @function render
+     * @description Renders the frames per second.
+     * @returns {void}
+     */
     render() {
         // convert delta time since the last frame render into a measure of fps
         const now = performance.now();

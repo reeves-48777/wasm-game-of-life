@@ -55,12 +55,22 @@ if (canvas.getContext) {
         );
     };
 
+    /**
+     * @description Checks if a bit is set in a Uint8Array
+     * @param {Number} bitIndex 
+     * @param {Array} cellsArray 
+     * @returns true if the bit is set, false otherwise
+     */
     const bitIsSet = (bitIndex, cellsArray) => {
         const byteIndex = Math.floor(bitIndex / bitStorageSize);
         const mask = 1 << (bitIndex % bitStorageSize);
         return (cellsArray[byteIndex] & mask) !== 0;
     };
 
+    /**
+     * @description Draws the grid on the canvas
+     * @returns {void}
+     */
     const drawGrid = () => {
         ctx.beginPath();
         ctx.strokeStyle = GRID_COLOR;
@@ -80,6 +90,10 @@ if (canvas.getContext) {
         ctx.stroke();
     };
 
+    /**
+     * @description Draws the cells on the canvas, the color depends on if the cell is alive or not
+     * @returns {void}
+     */
     const drawCells = () => {
         const cellsPtr = universe.cells();
         const cells = new Uint8Array(memory.buffer, cellsPtr, width * height / bitStorageSize);
@@ -116,6 +130,10 @@ if (canvas.getContext) {
         ctx.stroke();
     };
 
+    /**
+     * @description Draws the grid and the cells on the canvas
+     * @returns {void}
+     */
     const draw = () => {
         ctx.save();
         ctx.clearRect(0,0, canvas.width, canvas.height);
@@ -127,6 +145,13 @@ if (canvas.getContext) {
         ctx.restore();
     };
 
+
+    /**
+     * @description Gets the mouse position on the canvas
+     * @param {HTMLCanvasElement} canvas 
+     * @param {Event} evt 
+     * @returns 
+     */
     const getMousePosition = (canvas, evt) => {
         var rect = canvas.getBoundingClientRect();
         return {
@@ -135,6 +160,10 @@ if (canvas.getContext) {
         };
     };
 
+    /**
+     * @description Zooms in or out on the canvas
+     * @param {Event} event 
+     */
     const zoom = (event) => {
         const mousePosition = getMousePosition(canvas, event);
 
@@ -156,6 +185,10 @@ if (canvas.getContext) {
 
     canvas.onwheel = zoom;
 
+    /**
+     * 
+     * @param {Event} event 
+     */
     const startDrag = (event) => {
         if (event.button === RMB) {
             const startX = event.clientX - offsetX;
@@ -194,15 +227,25 @@ if (canvas.getContext) {
     // play/pause button
     const playPauseButton = document.getElementById("play-pause");
 
+    /**
+     * @description Checks if the animation is paused or not
+     * @returns true if the animation is paused, false otherwise
+     */
     const isPaused = () => {
         return animationId === null;
     }
 
+    /**
+     * @description Plays the animation
+     */
     const play = () => {
         playPauseButton.textContent = "⏸️";
         renderLoop();
     };
 
+    /**
+     * @description Pauses the animation
+     */
     const pause = () => {
         playPauseButton.textContent = "▶️";
         cancelAnimationFrame(animationId);
@@ -247,12 +290,6 @@ if (canvas.getContext) {
             drawGrid();
             drawCells();
         }
-        // debug avec un cercle rouge pour voir la ou le click est détecté
-        // ctx.strokeStyle = "#FF0000";
-        // ctx.beginPath();
-        // ctx.arc(x, y, 5, 0, Math.PI * 2);
-        // ctx.stroke();
-
     });
 
     canvas.addEventListener("contextmenu", e => e.preventDefault());
@@ -261,6 +298,9 @@ if (canvas.getContext) {
 
     let animationId = null;
 
+    /**
+     * @description Renders the frames per second and ticks the universe
+     */
     const renderLoop = () => {
         fps.render();
         for (let i = 0; i < ticksPerFrame.value; i++) {
@@ -269,14 +309,6 @@ if (canvas.getContext) {
         draw();
         animationId = requestAnimationFrame(renderLoop);
     };
-
-    // document.addEventListener('keypress', (e) => {
-    //     if (e.code === "Space") {
-    //         e.preventDefault();
-    //         universe.tick();
-    //         drawDelta;
-    //     }
-    // })
 
     draw();
     play();

@@ -19,6 +19,7 @@ macro_rules! log {
     };
 }
 
+/// Timer struct to measure the time taken by a function
 pub struct Timer<'a> {
     name : &'a str,
 }

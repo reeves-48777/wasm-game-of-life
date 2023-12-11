@@ -1,5 +1,8 @@
 use wasm_bindgen::prelude::*;
 
+/// Common spaceships
+/// 
+/// This enum contains the most common spaceships
 #[wasm_bindgen]
 pub enum CommonSpaceships {
     Glider,
@@ -7,7 +10,9 @@ pub enum CommonSpaceships {
     Middleweight,
     Heavyweight
 }
+
 impl CommonSpaceships {
+    /// Returns the pattern of the spaceship, the width and the height
     pub fn pattern(&self) -> (Vec<bool>, usize, usize) {
         match self {
             CommonSpaceships::Glider => {
